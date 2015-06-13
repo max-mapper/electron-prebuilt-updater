@@ -69,6 +69,7 @@ app.post('/', function (req, res) {
       })
     })
     .then(function (release) {
+      console.log(release)
       npm.load({}, function (err) {
         if (err) throw err
         npm.commands.publish([release.tarball_url], function (err) {
