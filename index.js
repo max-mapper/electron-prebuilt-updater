@@ -59,6 +59,9 @@ app.post('/', function (req, res) {
         body: newVersion
       })
     })
+    .then(function (release) {
+      console.log(release)
+    })
     .then(function () {
       return res.send(`Update to Electron v${newVersion}`)
     })
