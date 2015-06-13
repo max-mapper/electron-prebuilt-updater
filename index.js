@@ -25,15 +25,15 @@ app.use(bodyParser.json())
 app.set('port', (process.env.PORT || 5000))
 
 app.post('/', function (req, res) {
+  let hubSignature = req.headers['x-hub-signature'].replace('sha1=', '')
   let signature = crypto.createHmac('sha1', secret)
                         .update(JSON.stringify(req.body))
                         .digest('hex')
 
-  if (signature === req.headers['x-hub-signature'].replace('sha1=', '')) {
+  if (req.body.release && signature === hubSignature) {
     let createReleaseAsync = Promise.promisify(github.releases.createRelease)
     let getContentAsync = Promise.promisify(github.repos.getContent)
     let updateFileAsync = Promise.promisify(github.repos.updateFile)
-    console.log(req.body)
     let newVersion = req.body.release.tag_name.replace('v', '')
 
     github.authenticate({ type: 'oauth', token: token })
@@ -82,7 +82,7 @@ app.post('/', function (req, res) {
       return res.send(`Update to Electron v${newVersion}`)
     })
   } else {
-    return res.send('signature does not match payload')
+    return res.send('pong')
   }
 })
 
