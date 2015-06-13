@@ -35,6 +35,7 @@ app.post('/', function (req, res) {
     let getContentAsync = Promise.promisify(github.repos.getContent)
     let updateFileAsync = Promise.promisify(github.repos.updateFile)
     let newVersion = req.body.release.tag_name.replace('v', '')
+    let npmrc = path.resolve(process.env.HOME, '.npmrc')
 
     github.authenticate({ type: 'oauth', token: token })
     getContentAsync({
@@ -57,9 +58,13 @@ app.post('/', function (req, res) {
       })
     })
     .then(function () {
-      let npmrc = path.resolve(process.env.HOME, '.npmrc')
-      let content = `_auth=${process.env.API_KEY}\nemail=${process.env.EMAIL}`
-      return fs.writeFileAsync(npmrc, content)
+      return fs.statAsync(npmrc)
+    })
+    .then(function (stat) {
+      if (!stat) {
+        let content = `_auth=${process.env.API_KEY}\nemail=${process.env.EMAIL}`
+        return fs.writeFileAsync(npmrc, content)
+      }
     })
     .then(function () {
       return createReleaseAsync({
