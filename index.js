@@ -25,7 +25,7 @@ app.post('/', function (req, res) {
                         .update(JSON.stringify(req.body))
                         .digest('hex')
 
-  if (signature === req.headers['x-hub-signature']) {
+  if (signature === req.headers['x-hub-signature'].replace('sha1=', '')) {
     let getContentAsync = Promise.promisify(github.repos.getContent)
     let updateFileAsync = Promise.promisify(github.repos.updateFile)
     let newVersion = req.body.release.tag_name.replace('v', '')
@@ -52,7 +52,6 @@ app.post('/', function (req, res) {
       return res.send(`Update to Electron v${newVersion}`)
     })
   } else {
-    console.log(signature, req.headers['x-hub-signature'])
     return res.send('signature does not match payload')
   }
 })
