@@ -87,7 +87,7 @@ app.post('/', function (req, res) {
       return res.send(`Update to Electron v${newVersion}`)
     })
   } else {
-    return res.send('pong')
+    return res.status(403).send('pong')
   }
 })
 
