@@ -32,7 +32,6 @@ app.post('/', function (req, res) {
   if (signature === req.headers['x-hub-signature'].replace('sha1=', '')) {
     let createReleaseAsync = Promise.promisify(github.releases.createRelease)
     let getContentAsync = Promise.promisify(github.repos.getContent)
-    let publishAsync = Promise.promisify(npm.commands.publish)
     let updateFileAsync = Promise.promisify(github.repos.updateFile)
     let newVersion = req.body.release.tag_name.replace('v', '')
 
@@ -70,9 +69,11 @@ app.post('/', function (req, res) {
       })
     })
     .then(function (release) {
-      return npm.load({}, function (err) {
+      npm.load({}, function (err) {
         if (err) throw err
-        return publishAsync([release.tarball_url])
+        npm.commands.publish([release.tarball_url], function (err) {
+          if (err) throw err
+        })
       })
     })
     .then(function () {
