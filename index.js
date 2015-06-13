@@ -33,6 +33,7 @@ app.post('/', function (req, res) {
     let createReleaseAsync = Promise.promisify(github.releases.createRelease)
     let getContentAsync = Promise.promisify(github.repos.getContent)
     let updateFileAsync = Promise.promisify(github.repos.updateFile)
+    console.log(req.body)
     let newVersion = req.body.release.tag_name.replace('v', '')
 
     github.authenticate({ type: 'oauth', token: token })
