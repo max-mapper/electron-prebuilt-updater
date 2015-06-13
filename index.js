@@ -50,7 +50,8 @@ app.post('/', function (req, res) {
         repo: repo,
         path: 'package.json',
         message: `Update to Electron v${newVersion}`,
-        content: new Buffer(JSON.stringify(content)).toString('base64'),
+        content: new Buffer(JSON.stringify(content, null, '  '))
+                                .toString('base64'),
         sha: file.sha
       })
     })
@@ -69,7 +70,6 @@ app.post('/', function (req, res) {
       })
     })
     .then(function (release) {
-      console.log(release)
       npm.load({}, function (err) {
         if (err) throw err
         npm.commands.publish([release.tarball_url], function (err) {
