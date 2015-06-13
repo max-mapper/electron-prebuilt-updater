@@ -40,6 +40,7 @@ app.post('/', function (req, res) {
     })
     .then(function (file) {
       let content = JSON.parse(new Buffer(file.content, 'base64').toString())
+      content.version = newVersion
 
       return updateFileAsync({
         user: owner,
