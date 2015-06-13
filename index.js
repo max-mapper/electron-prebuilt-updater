@@ -20,8 +20,8 @@ const owner = process.env.OWNER
 const repo = process.env.REPO
 const secret = process.env.SECRET
 const token = process.env.TOKEN
-app.use(bodyParser.json())
 
+app.use(bodyParser.json())
 app.set('port', (process.env.PORT || 5000))
 
 app.post('/', function (req, res) {
