@@ -5,6 +5,9 @@ const Promise = require('bluebird')
 const bodyParser = require('body-parser')
 const crypto = require('crypto')
 const express = require('express')
+const fs = Promise.promisifyAll(require('fs'))
+const npm = require('npm')
+const path = require('path')
 
 const app = express()
 const github = new GitHubApi({
@@ -29,6 +32,7 @@ app.post('/', function (req, res) {
   if (signature === req.headers['x-hub-signature'].replace('sha1=', '')) {
     let createReleaseAsync = Promise.promisify(github.releases.createRelease)
     let getContentAsync = Promise.promisify(github.repos.getContent)
+    let publishAsync = Promise.promisify(npm.commands.publish)
     let updateFileAsync = Promise.promisify(github.repos.updateFile)
     let newVersion = req.body.release.tag_name.replace('v', '')
 
@@ -52,6 +56,11 @@ app.post('/', function (req, res) {
       })
     })
     .then(function () {
+      let npmrc = path.resolve(process.env.HOME, '.npmrc')
+      let content = `_auth=${process.env.API_KEY}\nemail=${process.env.EMAIL}`
+      return fs.writeFileAsync(npmrc, content)
+    })
+    .then(function () {
       return createReleaseAsync({
         owner: owner,
         repo: repo,
@@ -61,7 +70,10 @@ app.post('/', function (req, res) {
       })
     })
     .then(function (release) {
-      console.log(release)
+      return npm.load({}, function (err) {
+        if (err) throw err
+        return publishAsync([release.tarball_url])
+      })
     })
     .then(function () {
       return res.send(`Update to Electron v${newVersion}`)
