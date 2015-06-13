@@ -52,6 +52,7 @@ app.post('/', function (req, res) {
       return res.send(`Update to Electron v${newVersion}`)
     })
   } else {
+    console.log(signature, req.headers['x-hub-signature'])
     return res.send('signature does not match payload')
   }
 })
