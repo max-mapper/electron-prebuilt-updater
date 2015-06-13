@@ -13,6 +13,8 @@ const github = new GitHubApi({
     'User-Agent': 'electron-prebuilt-updater'
   }
 })
+const owner = process.env.OWNER
+const repo = process.env.REPO
 const secret = process.env.SECRET
 const token = process.env.TOKEN
 
@@ -32,16 +34,16 @@ app.post('/', function (req, res) {
 
     github.authenticate({ type: 'oauth', token: token })
     getContentAsync({
-      user: 'johnmuhl',
-      repo: 'electron-prebuilt',
+      user: owner,
+      repo: repo,
       path: 'package.json'
     })
     .then(function (file) {
       let content = JSON.parse(new Buffer(file.content, 'base64').toString())
 
       return updateFileAsync({
-        user: 'johnmuhl',
-        repo: 'electron-prebuilt',
+        user: owner,
+        repo: repo,
         path: 'package.json',
         message: `Update to Electron v${newVersion}`,
         content: new Buffer(JSON.stringify(content)).toString('base64'),
