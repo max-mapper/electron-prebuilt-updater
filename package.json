@@ -1,0 +1,22 @@
+{
+  "name": "electron-prebuilt-updater",
+  "version": "0.0.0",
+  "description": "Automatically update electron-prebuilt as new Electron releases become available",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.12.4",
+    "request": "^2.57.0"
+  },
+  "engines": {
+    "iojs": "2.2.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/johnmuhl/electron-prebuilt-updater"
+  },
+  "private": true,
+  "license": "MIT"
+}
