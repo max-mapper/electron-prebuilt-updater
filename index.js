@@ -17,7 +17,6 @@ const owner = process.env.OWNER
 const repo = process.env.REPO
 const secret = process.env.SECRET
 const token = process.env.TOKEN
-
 app.use(bodyParser.json())
 
 app.set('port', (process.env.PORT || 5000))
@@ -28,6 +27,7 @@ app.post('/', function (req, res) {
                         .digest('hex')
 
   if (signature === req.headers['x-hub-signature'].replace('sha1=', '')) {
+    let createReleaseAsync = Promise.promisify(github.releases.createRelease)
     let getContentAsync = Promise.promisify(github.repos.getContent)
     let updateFileAsync = Promise.promisify(github.repos.updateFile)
     let newVersion = req.body.release.tag_name.replace('v', '')
@@ -48,6 +48,15 @@ app.post('/', function (req, res) {
         message: `Update to Electron v${newVersion}`,
         content: new Buffer(JSON.stringify(content)).toString('base64'),
         sha: file.sha
+      })
+    })
+    .then(function () {
+      return createReleaseAsync({
+        owner: owner,
+        repo: repo,
+        tag_name: `v${newVersion}`,
+        name: `v${newVersion}`,
+        body: newVersion
       })
     })
     .then(function () {
