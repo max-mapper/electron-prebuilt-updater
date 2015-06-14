@@ -1,7 +1,7 @@
 {
   "name": "electron-prebuilt-updater",
   "version": "0.1.0",
-  "description": "Automatically update electron-prebuilt as new Electron releases become available",
+  "description": "A web service that automatically updates and releases a new version of electron-prebuilt when there is a release of Electron.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"

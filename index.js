@@ -16,6 +16,8 @@ const github = new GitHubApi({
     'User-Agent': 'electron-prebuilt-updater'
   }
 })
+const apiKey = process.env.API_KEY
+const email = process.env.EMAIL
 const owner = process.env.OWNER
 const repo = process.env.REPO
 const secret = process.env.SECRET
@@ -62,7 +64,7 @@ app.post('/', function (req, res) {
     })
     .then(function (stat) {
       if (!stat) {
-        let content = `_auth=${process.env.API_KEY}\nemail=${process.env.EMAIL}`
+        let content = `_auth=${apiKey}\nemail=${email}`
         return fs.writeFileAsync(npmrc, content)
       }
     })
