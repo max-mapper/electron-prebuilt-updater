@@ -70,6 +70,13 @@ app.post('/', function (req, res) {
     .then(function () {
       return fs.statAsync(npmrc)
     })
+    .catch(function (err) {
+      if (err.code === 'ENOENT') return null
+      else {
+        console.error(`Failed to stat file: ${npmrc}`)
+        throw err
+      }
+    })
     .then(function (stat) {
       if (!stat) {
         let content = `_auth=${apiKey}\nemail=${email}`
