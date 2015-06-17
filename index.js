@@ -23,9 +23,9 @@ const repo = process.env.REPO
 const secret = process.env.SECRET
 const token = process.env.TOKEN
 
+Promise.longStackTraces()
 app.use(bodyParser.json())
 app.set('port', (process.env.PORT || 5000))
-
 app.post('/', function (req, res) {
   let hubSignature = req.headers['x-hub-signature'].replace('sha1=', '')
   let signature = crypto.createHmac('sha1', secret)
@@ -45,6 +45,10 @@ app.post('/', function (req, res) {
       repo: repo,
       path: 'package.json'
     })
+    .catch(function (err) {
+      console.error('Failed to get remote file: package.json')
+      throw err
+    })
     .then(function (file) {
       let content = JSON.parse(new Buffer(file.content, 'base64').toString())
       content.version = newVersion
@@ -58,6 +62,10 @@ app.post('/', function (req, res) {
                                 .toString('base64'),
         sha: file.sha
       })
+      .catch(function (err) {
+        console.error('Failed to update remote file: package.json')
+        throw err
+      })
     })
     .then(function () {
       return fs.statAsync(npmrc)
@@ -66,6 +74,10 @@ app.post('/', function (req, res) {
       if (!stat) {
         let content = `_auth=${apiKey}\nemail=${email}`
         return fs.writeFileAsync(npmrc, content)
+        .catch(function (err) {
+          console.error(`Failed to write file: ${npmrc}`)
+          throw err
+        })
       }
     })
     .then(function () {
@@ -76,12 +88,22 @@ app.post('/', function (req, res) {
         name: `v${newVersion}`,
         body: newVersion
       })
+      .catch(function (err) {
+        console.error('Failed to create release')
+        throw err
+      })
     })
     .then(function (release) {
       npm.load({}, function (err) {
-        if (err) throw err
+        if (err) {
+          console.error('Failed to load npm')
+          throw err
+        }
         npm.commands.publish([release.tarball_url], function (err) {
-          if (err) throw err
+          if (err) {
+            console.error('Failed to publish package')
+            throw err
+          }
         })
       })
     })
@@ -89,7 +111,7 @@ app.post('/', function (req, res) {
       return res.send(`Update to Electron v${newVersion}`)
     })
   } else {
-    return res.status(403).send('pong')
+    return res.status(403).send('This service only responds to release events')
   }
 })
 
