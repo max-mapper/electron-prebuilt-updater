@@ -32,6 +32,9 @@ app.post('/', function (req, res) {
                         .update(JSON.stringify(req.body))
                         .digest('hex')
 
+  console.error('post body', JSON.stringify(req.body))
+  console.error('post headers', JSON.stringify(req.headers))
+  
   if (req.body.release && signature === hubSignature) {
     let createReleaseAsync = Promise.promisify(github.releases.createRelease)
     let getContentAsync = Promise.promisify(github.repos.getContent)
