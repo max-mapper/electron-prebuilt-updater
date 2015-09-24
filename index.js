@@ -8,6 +8,7 @@ const express = require('express')
 const fs = Promise.promisifyAll(require('fs'))
 const npm = require('npm')
 const path = require('path')
+const semver = require('semver')
 
 const app = express()
 const github = new GitHubApi({
@@ -109,11 +110,32 @@ app.post('/', function (req, res) {
           console.error('Failed to load npm')
           throw err
         }
-        npm.commands.publish([release.tarball_url], function (err) {
-          if (err) {
+
+        const publishAsync = Promise.promisify(npm.commands.publish)
+        const tagAsync = Promise.promisify(npm.commands['dist-tag'])
+        const viewAsync = Promise.promisify(npm.commands.view)
+        return viewAsync(['electron-prebuilt@latest'])
+        .catch(function (err) {
+          console.error('Failed to get package info')
+          throw err
+        })
+        .then(function (response) {
+          const info = response[0]
+          const lastVersion = info[Object.keys(info)[0]]['dist-tags'].latest
+          return publishAsync([release.tarball_url])
+          .catch(function (err) {
             console.error('Failed to publish package')
             throw err
-          }
+          })
+          .then(function () {
+            if (semver.gt(lastVersion, newVersion)) {
+              return tagAsync(['add', `electron-prebuilt@${lastVersion} latest`])
+              .catch(function (err) {
+                console.error('Failed to update latest tag')
+                throw err
+              })
+            }
+          })
         })
       })
     })
