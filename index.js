@@ -112,7 +112,6 @@ app.post('/', function (req, res) {
         }
 
         const publishAsync = Promise.promisify(npm.commands.publish)
-        const tagAsync = Promise.promisify(npm.commands['dist-tag'])
         const viewAsync = Promise.promisify(npm.commands.view)
         return viewAsync(['electron-prebuilt@latest'])
         .catch(function (err) {
@@ -129,11 +128,8 @@ app.post('/', function (req, res) {
           })
           .then(function () {
             if (semver.gt(lastVersion, newVersion)) {
-              return tagAsync(['add', `electron-prebuilt@${lastVersion} latest`])
-              .catch(function (err) {
-                console.error('Failed to update latest tag')
-                throw err
-              })
+              const execSync = require('child_process').execSync
+              execSync(`${__dirname}/node_modules/.bin/npm dist-tags add electron-prebuilt@${lastVersion} latest`)
             }
           })
         })
