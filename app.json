@@ -1,6 +1,6 @@
 {
   "name": "electron-prebuilt-updater",
-  "repository": "https://github.com/johnmuhl/electron-prebuilt-updater",
+  "repository": "https://github.com/electron-userland/electron-prebuilt-updater",
   "env": {
     "API_KEY": "echo -n 'npm_username:npm_password' | base64",
     "EMAIL": "npm email address",
