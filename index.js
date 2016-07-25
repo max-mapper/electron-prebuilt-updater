@@ -27,9 +27,9 @@ Promise.longStackTraces()
 app.use(bodyParser.json())
 app.set('port', (process.env.PORT || 5000))
 app.post('/', function (req, res) {
-  let packageName = req.params.packageName
-  let owner = req.params.owner
-  let repo = req.params.repo
+  let packageName = req.query.packageName
+  let owner = req.query.owner
+  let repo = req.query.repo
   let hubSignature = req.headers['x-hub-signature'].replace('sha1=', '')
   let signature = crypto.createHmac('sha1', secret)
                         .update(JSON.stringify(req.body))
