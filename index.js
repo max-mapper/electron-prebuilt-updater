@@ -35,7 +35,7 @@ app.post('/', function (req, res) {
 
   console.error('post body', JSON.stringify(req.body))
   console.error('post headers', JSON.stringify(req.headers))
-  
+
   if (req.body.release && signature === hubSignature) {
     let createReleaseAsync = Promise.promisify(github.releases.createRelease)
     let getContentAsync = Promise.promisify(github.repos.getContent)
@@ -53,24 +53,24 @@ app.post('/', function (req, res) {
       console.error('Failed to get remote file: package.json')
       throw err
     })
-    .then(function (file) {
-      let content = JSON.parse(new Buffer(file.content, 'base64').toString())
-      content.version = newVersion
-
-      return updateFileAsync({
-        user: owner,
-        repo: repo,
-        path: 'package.json',
-        message: `Update to Electron v${newVersion}`,
-        content: new Buffer(JSON.stringify(content, null, '  '))
-                                .toString('base64'),
-        sha: file.sha
-      })
-      .catch(function (err) {
-        console.error('Failed to update remote file: package.json')
-        throw err
-      })
-    })
+    // .then(function (file) {
+    //   let content = JSON.parse(new Buffer(file.content, 'base64').toString())
+    //   content.version = newVersion
+    //
+    //   return updateFileAsync({
+    //     user: owner,
+    //     repo: repo,
+    //     path: 'package.json',
+    //     message: `Update to Electron v${newVersion}`,
+    //     content: new Buffer(JSON.stringify(content, null, '  '))
+    //                             .toString('base64'),
+    //     sha: file.sha
+    //   })
+    //   .catch(function (err) {
+    //     console.error('Failed to update remote file: package.json')
+    //     throw err
+    //   })
+    // })
     .then(function () {
       return fs.statAsync(npmrc)
     })
@@ -104,6 +104,38 @@ app.post('/', function (req, res) {
         throw err
       })
     })
+    // .then(function (release) {
+    //   npm.load({}, function (err) {
+    //     if (err) {
+    //       console.error('Failed to load npm')
+    //       throw err
+    //     }
+    //
+    //     const publishAsync = Promise.promisify(npm.commands.publish)
+    //     const viewAsync = Promise.promisify(npm.commands.view)
+    //     return viewAsync(['electron-prebuilt@latest'])
+    //     .catch(function (err) {
+    //       console.error('Failed to get electron-prebuilt package info')
+    //       throw err
+    //     })
+    //     .then(function (response) {
+    //       const info = response[0]
+    //       const lastVersion = info[Object.keys(info)[0]]['dist-tags'].latest
+    //       return publishAsync([release.tarball_url])
+    //       .catch(function (err) {
+    //         console.error('Failed to publish electron-prebuilt package')
+    //         throw err
+    //       })
+    //       .then(function () {
+    //         if (semver.gt(lastVersion, newVersion)) {
+    //           const execSync = require('child_process').execSync
+    //           execSync(`${__dirname}/node_modules/.bin/npm dist-tags add electron-prebuilt@${lastVersion} latest`)
+    //         }
+    //       })
+    //     })
+    //   })
+    //   return release
+    // })
     .then(function (release) {
       npm.load({}, function (err) {
         if (err) {
@@ -113,9 +145,9 @@ app.post('/', function (req, res) {
 
         const publishAsync = Promise.promisify(npm.commands.publish)
         const viewAsync = Promise.promisify(npm.commands.view)
-        return viewAsync(['electron-prebuilt@latest'])
+        return viewAsync(['electron@latest'])
         .catch(function (err) {
-          console.error('Failed to get package info')
+          console.error('Failed to get electron package info')
           throw err
         })
         .then(function (response) {
@@ -123,13 +155,13 @@ app.post('/', function (req, res) {
           const lastVersion = info[Object.keys(info)[0]]['dist-tags'].latest
           return publishAsync([release.tarball_url])
           .catch(function (err) {
-            console.error('Failed to publish package')
+            console.error('Failed to publish electron package')
             throw err
           })
           .then(function () {
             if (semver.gt(lastVersion, newVersion)) {
               const execSync = require('child_process').execSync
-              execSync(`${__dirname}/node_modules/.bin/npm dist-tags add electron-prebuilt@${lastVersion} latest`)
+              execSync(`${__dirname}/node_modules/.bin/npm dist-tags add electron@${lastVersion} latest`)
             }
           })
         })
