@@ -132,6 +132,9 @@ app.post('/', function (req, res) {
             if (semver.gt(lastVersion, newVersion)) {
               const execSync = require('child_process').execSync
               execSync(`${__dirname}/node_modules/.bin/npm dist-tags add ${packageName}@${lastVersion} latest`)
+              if (packageName === 'electron-prebuilt') {
+                execSync(`${__dirname}/node_modules/.bin/npm deprecate electron-prebuilt@">=1.3.1" "electron-prebuilt has been renamed to electron. For more details, see http://electron.atom.io/blog/2016/08/16/npm-install-electron"`)
+              }
             }
           })
         })
