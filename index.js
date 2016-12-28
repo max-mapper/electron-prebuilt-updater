@@ -99,7 +99,7 @@ app.post('/', function (req, res) {
         repo: repo,
         tag_name: `v${newVersion}`,
         name: `v${newVersion}`,
-        body: newVersion
+        body: `[${newVersion} Release Notes](https://github.com/electron/electron/releases/v${newVersion})`
       })
       .catch(function (err) {
         console.error('Failed to create release')
