@@ -8,6 +8,7 @@ const express = require('express')
 const fs = Promise.promisifyAll(require('fs'))
 const npm = require('npm')
 const path = require('path')
+const semver = require('semver')
 
 const app = express()
 const github = new GitHubApi({
@@ -16,10 +17,9 @@ const github = new GitHubApi({
     'User-Agent': 'electron-prebuilt-updater'
   }
 })
+
 const apiKey = process.env.API_KEY
 const email = process.env.EMAIL
-const owner = process.env.OWNER
-const repo = process.env.REPO
 const secret = process.env.SECRET
 const token = process.env.TOKEN
 
@@ -27,10 +27,16 @@ Promise.longStackTraces()
 app.use(bodyParser.json())
 app.set('port', (process.env.PORT || 5000))
 app.post('/', function (req, res) {
+  let packageName = req.query.packageName
+  let owner = req.query.owner
+  let repo = req.query.repo
   let hubSignature = req.headers['x-hub-signature'].replace('sha1=', '')
   let signature = crypto.createHmac('sha1', secret)
                         .update(JSON.stringify(req.body))
                         .digest('hex')
+
+  console.error('post body', JSON.stringify(req.body))
+  console.error('post headers', JSON.stringify(req.headers))
 
   if (req.body.release && signature === hubSignature) {
     let createReleaseAsync = Promise.promisify(github.releases.createRelease)
@@ -93,7 +99,7 @@ app.post('/', function (req, res) {
         repo: repo,
         tag_name: `v${newVersion}`,
         name: `v${newVersion}`,
-        body: newVersion
+        body: `[${newVersion} Release Notes](https://github.com/electron/electron/releases/v${newVersion})`
       })
       .catch(function (err) {
         console.error('Failed to create release')
@@ -106,11 +112,28 @@ app.post('/', function (req, res) {
           console.error('Failed to load npm')
           throw err
         }
-        npm.commands.publish([release.tarball_url], function (err) {
-          if (err) {
+
+        const publishAsync = Promise.promisify(npm.commands.publish)
+        const viewAsync = Promise.promisify(npm.commands.view)
+        return viewAsync([`${packageName}@latest`])
+        .catch(function (err) {
+          console.error('Failed to get package info')
+          throw err
+        })
+        .then(function (response) {
+          const info = response[0]
+          const lastVersion = info[Object.keys(info)[0]]['dist-tags'].latest
+          return publishAsync([release.tarball_url])
+          .catch(function (err) {
             console.error('Failed to publish package')
             throw err
-          }
+          })
+          .then(function () {
+            if (semver.gt(lastVersion, newVersion)) {
+              const execSync = require('child_process').execSync
+              execSync(`${__dirname}/node_modules/.bin/npm dist-tags add ${packageName}@${lastVersion} latest`)
+            }
+          })
         })
       })
     })
