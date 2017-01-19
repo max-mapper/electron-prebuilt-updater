@@ -44,6 +44,7 @@ app.post('/', function (req, res) {
     let updateFileAsync = Promise.promisify(github.repos.updateFile)
     let newVersion = req.body.release.tag_name.replace('v', '')
     let draft = req.body.release.draft
+    let prerelease = req.body.release.prerelease
     let npmrc = path.resolve(process.env.HOME, '.npmrc')
 
     if (draft) {
@@ -128,13 +129,20 @@ app.post('/', function (req, res) {
         .then(function (response) {
           const info = response[0]
           const lastVersion = info[Object.keys(info)[0]]['dist-tags'].latest
-          return publishAsync([release.tarball_url])
+          const publishArgs = [release.tarball_url]
+
+          // Use beta tag for prereleases
+          if (prerelease) {
+            publishArgs.push('--tag', 'beta')
+          }
+
+          return publishAsync(publishArgs)
           .catch(function (err) {
             console.error('Failed to publish package')
             throw err
           })
           .then(function () {
-            if (semver.gt(lastVersion, newVersion)) {
+            if (!prerelease && semver.gt(lastVersion, newVersion)) {
               const execSync = require('child_process').execSync
               execSync(`${__dirname}/node_modules/.bin/npm dist-tags add ${packageName}@${lastVersion} latest`)
             }
