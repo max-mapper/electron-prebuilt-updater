@@ -105,7 +105,8 @@ app.post('/', function (req, res) {
         repo: repo,
         tag_name: `v${newVersion}`,
         name: `v${newVersion}`,
-        body: `[${newVersion} Release Notes](https://github.com/electron/electron/releases/v${newVersion})`
+        body: `[${newVersion} Release Notes](https://github.com/electron/electron/releases/v${newVersion})`,
+        prerelease: prerelease
       })
       .catch(function (err) {
         console.error('Failed to create release')
@@ -113,7 +114,9 @@ app.post('/', function (req, res) {
       })
     })
     .then(function (release) {
-      npm.load({}, function (err) {
+      var npmConfig = {}
+      if (prerelease) npmConfig.tag = 'beta'
+      npm.load(npmConfig, function (err) {
         if (err) {
           console.error('Failed to load npm')
           throw err
@@ -129,14 +132,7 @@ app.post('/', function (req, res) {
         .then(function (response) {
           const info = response[0]
           const lastVersion = info[Object.keys(info)[0]]['dist-tags'].latest
-          const publishArgs = [release.tarball_url]
-
-          // Use beta tag for prereleases
-          if (prerelease) {
-            publishArgs.push('--tag', 'beta')
-          }
-
-          return publishAsync(publishArgs)
+          return publishAsync([release.tarball_url])
           .catch(function (err) {
             console.error('Failed to publish package')
             throw err
