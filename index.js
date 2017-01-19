@@ -103,8 +103,8 @@ app.post('/', function (req, res) {
       return createReleaseAsync({
         owner: owner,
         repo: repo,
-        tag_name: `v${newVersion}`,
-        name: `v${newVersion}`,
+        tag_name: req.body.release.tag_name,
+        name: req.body.release.name,
         body: `[${newVersion} Release Notes](https://github.com/electron/electron/releases/v${newVersion})`,
         prerelease: prerelease
       })
