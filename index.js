@@ -43,7 +43,12 @@ app.post('/', function (req, res) {
     let getContentAsync = Promise.promisify(github.repos.getContent)
     let updateFileAsync = Promise.promisify(github.repos.updateFile)
     let newVersion = req.body.release.tag_name.replace('v', '')
+    let draft = req.body.release.draft
     let npmrc = path.resolve(process.env.HOME, '.npmrc')
+
+    if (draft) {
+      return res.status(403).send('This service ignores draft releases')
+    }
 
     github.authenticate({ type: 'oauth', token: token })
     getContentAsync({
