@@ -43,7 +43,13 @@ app.post('/', function (req, res) {
     let getContentAsync = Promise.promisify(github.repos.getContent)
     let updateFileAsync = Promise.promisify(github.repos.updateFile)
     let newVersion = req.body.release.tag_name.replace('v', '')
+    let draft = req.body.release.draft
+    let prerelease = req.body.release.prerelease
     let npmrc = path.resolve(process.env.HOME, '.npmrc')
+
+    if (draft) {
+      return res.status(403).send('This service ignores draft releases')
+    }
 
     github.authenticate({ type: 'oauth', token: token })
     getContentAsync({
@@ -97,9 +103,10 @@ app.post('/', function (req, res) {
       return createReleaseAsync({
         owner: owner,
         repo: repo,
-        tag_name: `v${newVersion}`,
-        name: `v${newVersion}`,
-        body: `[${newVersion} Release Notes](https://github.com/electron/electron/releases/v${newVersion})`
+        tag_name: req.body.release.tag_name,
+        name: req.body.release.name,
+        body: `[${newVersion} Release Notes](https://github.com/electron/electron/releases/v${newVersion})`,
+        prerelease: prerelease
       })
       .catch(function (err) {
         console.error('Failed to create release')
@@ -107,7 +114,9 @@ app.post('/', function (req, res) {
       })
     })
     .then(function (release) {
-      npm.load({}, function (err) {
+      var npmConfig = {}
+      if (prerelease) npmConfig.tag = 'beta'
+      npm.load(npmConfig, function (err) {
         if (err) {
           console.error('Failed to load npm')
           throw err
@@ -129,7 +138,7 @@ app.post('/', function (req, res) {
             throw err
           })
           .then(function () {
-            if (semver.gt(lastVersion, newVersion)) {
+            if (!prerelease && semver.gt(lastVersion, newVersion)) {
               const execSync = require('child_process').execSync
               execSync(`${__dirname}/node_modules/.bin/npm dist-tags add ${packageName}@${lastVersion} latest`)
             }
